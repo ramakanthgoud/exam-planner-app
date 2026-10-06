@@ -5,100 +5,119 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Exam Buddy</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--green:#86bc25;--dark:#17202a;--light:#f5f7f9;--border:#dfe4e8;--muted:#65727d;--red:#b42318}
 *{box-sizing:border-box}
 body{margin:0;background:var(--light);color:var(--dark);font:16px Arial,sans-serif}
-header{background:var(--dark);color:#fff;padding:32px 16px;text-align:center}
+header{background:var(--dark);color:#fff;padding:20px 16px;display:flex;align-items:center;gap:16px}
+.brand{text-align:center;flex:1}.logo{font-size:36px;font-weight:bold;color:var(--green)}
+header p{margin:5px 0 0}.account{display:flex;align-items:center;gap:10px;font-size:14px}
 main{max-width:1000px;margin:auto;padding:20px 16px}
 .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px}
 .hero{text-align:center;padding:42px 24px}
-.logo{font-size:42px;font-weight:bold;color:var(--green)}
-h1,h2,h3{margin-top:0}
-h1{font-size:34px}
-h2{font-size:25px}
-p{line-height:1.5}
-.help,.muted{color:var(--muted);font-size:14px;line-height:1.5}
+h1,h2,h3{margin-top:0}h1{font-size:34px}h2{font-size:25px}
+p{line-height:1.5}.help,.muted{color:var(--muted);font-size:14px;line-height:1.5}
 button,input,select{font:inherit;border-radius:8px}
 button{border:0;background:var(--green);color:#142000;font-weight:bold;cursor:pointer;padding:12px 16px}
+button:disabled{opacity:.55;cursor:not-allowed}
 button.secondary{background:#e9edf0;color:var(--dark)}
 button.danger{background:#f5d6d3;color:#8b1e17}
 button.small{padding:8px 12px;margin-top:8px}
+button.link-button{background:none;color:#527b00;padding:8px 0;text-decoration:underline}
 input,select{width:100%;padding:11px;border:1px solid #aeb8c2;background:#fff}
 label{display:block;font-weight:bold;margin:12px 0 6px}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.button-row{display:flex;gap:10px;margin-top:20px}
-.button-row button{flex:1}
+.button-row{display:flex;gap:10px;margin-top:20px}.button-row button{flex:1}
 .hidden{display:none!important}
 .feature-grid,.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .feature,.stat-card{padding:16px;border:1px solid var(--border);border-radius:10px;background:#fafcf7}
 .feature strong,.stat-card strong{display:block;color:#527b00;font-size:20px;margin-bottom:5px}
-.progress{height:8px;background:#e5e9ec;border-radius:8px;overflow:hidden}
-.progress span{display:block;height:100%;background:var(--green)}
+.auth-box{max-width:430px;margin:24px auto 0;text-align:left}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.auth-tabs button{background:#e9edf0;color:var(--dark)}.auth-tabs button.active{background:var(--green)}
+.message{padding:12px;border-radius:8px;margin-top:14px;background:#fff3cd}
+.error{background:#fde7e7;color:var(--red)}.success{background:#e9f6d5;color:#315300}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:5}
-.modal{max-width:430px;background:#fff;border-radius:16px;padding:28px;text-align:center}
-.modal h2{color:#527b00}
+.modal{max-width:430px;background:#fff;border-radius:16px;padding:28px;text-align:center}.modal h2{color:#527b00}
 .wizard-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:20px}
 .step-count{color:var(--muted);font-size:14px}
 .subject-row,.mock-row{border-top:1px solid var(--border);padding:16px 0}
-.subject-head{display:flex;gap:8px}
-.subject-head input{flex:1}
-.subject-head button{background:#f5d6d3;color:#8b1e17}
+.subject-head{display:flex;gap:8px}.subject-head input{flex:1}.subject-head button{background:#f5d6d3;color:#8b1e17}
 .topic-row{display:grid;grid-template-columns:1fr 130px 42px;gap:8px;margin-top:8px}
 .topic-row button{padding:8px;margin:0;background:#e9edf0;color:var(--dark)}
 .checkbox-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-.check{display:flex;align-items:center;gap:6px;font-weight:normal;margin:0}
-.check input{width:auto}
+.check{display:flex;align-items:center;gap:6px;font-weight:normal;margin:0}.check input{width:auto}
 .mock-grid{display:grid;grid-template-columns:1fr 1fr 110px;gap:8px;margin-top:10px}
-.message{padding:12px;border-radius:8px;margin-top:14px;background:#fff3cd}
-.error{background:#fde7e7;color:var(--red)}
-.success{background:#e9f6d5;color:#315300}
 .task{display:flex;gap:12px;align-items:flex-start;border-bottom:1px solid var(--border);padding:13px 0}
-.task:last-child{border-bottom:0}
-.task input{width:auto;margin-top:4px}
-.task-title{font-weight:bold}
-.task-meta{color:var(--muted);font-size:14px;margin-top:4px}
+.task:last-child{border-bottom:0}.task input{width:auto;margin-top:4px}
+.task-title{font-weight:bold}.task-meta{color:var(--muted);font-size:14px;margin-top:4px}
 .task.done .task-title{text-decoration:line-through;color:var(--muted)}
 .day-heading{background:#eef4e4;padding:10px 12px;border-radius:8px;margin:18px 0 0}
-.toolbar{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
-.toolbar label{margin:0}
+.toolbar{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}.toolbar label{margin:0}
+.sync-status{font-size:14px;color:var(--muted);margin-top:8px}.sync-status.error{color:var(--red);background:none;padding:0}
 @media(max-width:700px){
+ header{display:block;text-align:center}.account{justify-content:center;margin-top:12px}
  .form-grid,.feature-grid,.summary,.toolbar{grid-template-columns:1fr}
- .checkbox-grid{grid-template-columns:repeat(3,1fr)}
- .topic-row,.mock-grid{grid-template-columns:1fr}
+ .checkbox-grid{grid-template-columns:repeat(3,1fr)}.topic-row,.mock-grid{grid-template-columns:1fr}
  .button-row,.subject-head{flex-direction:column}
 }
 </style>
 </head>
 <body>
 <header>
+<div class="brand">
 <div class="logo">Exam Buddy</div>
 <p>Plan smarter. Prepare better.</p>
+</div>
+<div id="accountActions" class="account hidden">
+<span id="userLabel"></span>
+<button id="logoutButton" type="button" class="secondary">Log out</button>
+</div>
 </header>
 
 <main>
-<section id="welcome" class="card hero">
+<section id="loadingScreen" class="card hero">
+<h1>Loading Exam Buddy...</h1>
+<p>Please wait while we connect to your account.</p>
+</section>
+
+<section id="authScreen" class="card hero hidden">
 <h1>Welcome to Exam Buddy</h1>
-<p>Create a realistic study plan with topics, revisions, mock exams, and daily study sessions.</p>
-
-<div class="feature-grid">
-<div class="feature"><strong>Plan</strong>Organize every topic.</div>
-<div class="feature"><strong>Revise</strong>Build revision time in.</div>
-<div class="feature"><strong>Improve</strong>Track your progress.</div>
+<p>Log in to save your study plan and access it from another phone.</p>
+<div class="auth-box">
+<div class="auth-tabs">
+<button id="loginTab" type="button" class="active">Log in</button>
+<button id="registerTab" type="button">Create account</button>
 </div>
 
-<div class="card">
-<h2>Get started</h2>
-<p class="help">No password is needed yet. Your plan will be saved on this browser.</p>
-<label for="profileName">Your first name</label>
-<input id="profileName" placeholder="Example: Alex">
-<label for="profileEmail">Email address <span class="muted">(optional)</span></label>
-<input id="profileEmail" type="email" placeholder="Example: alex@email.com">
+<div id="standardAuthFields">
+<div id="registerFields" class="hidden">
+<label for="authName">First name</label>
+<input id="authName" placeholder="Example: Alex">
+</div>
+
+<label for="authEmail">Email address</label>
+<input id="authEmail" type="email" placeholder="Example: alex@email.com">
+
+<label for="authPassword">Password</label>
+<input id="authPassword" type="password" minlength="8" placeholder="At least 8 characters">
+
 <div class="button-row">
-<button id="startButton" type="button">Get started</button>
-<button id="guestButton" type="button" class="secondary">Continue as guest</button>
+<button id="authSubmit" type="button">Log in</button>
 </div>
-<div id="profileMessage" class="message hidden"></div>
+<button id="forgotButton" type="button" class="link-button">Forgot password?</button>
+</div>
+
+<div id="resetFields" class="hidden">
+<label for="newPassword">New password</label>
+<input id="newPassword" type="password" minlength="8" placeholder="At least 8 characters">
+<div class="button-row">
+<button id="updatePasswordButton" type="button">Update password</button>
+</div>
+</div>
+
+<div id="authMessage" class="message hidden"></div>
 </div>
 </section>
 
@@ -107,7 +126,7 @@ label{display:block;font-weight:bold;margin:12px 0 6px}
 <div class="wizard-head">
 <div>
 <h2>Create your study plan</h2>
-<p class="help">Answer a few simple questions. You can edit everything later.</p>
+<p class="help">Your plan will be saved securely to your Exam Buddy account.</p>
 </div>
 <div id="stepCount" class="step-count">Step 1 of 4</div>
 </div>
@@ -115,24 +134,15 @@ label{display:block;font-weight:bold;margin:12px 0 6px}
 <div class="wizard-step" data-step="1">
 <h3>Exam details</h3>
 <div class="form-grid">
-<div>
-<label for="examName">Exam name</label>
-<input id="examName" placeholder="Example: Final Mathematics Exam">
-</div>
-<div>
-<label for="startDate">Study start date</label>
-<input id="startDate" type="date">
-</div>
-<div>
-<label for="examDate">Exam date</label>
-<input id="examDate" type="date">
-</div>
+<div><label for="examName">Exam name</label><input id="examName" placeholder="Example: Final Mathematics Exam"></div>
+<div><label for="startDate">Study start date</label><input id="startDate" type="date"></div>
+<div><label for="examDate">Exam date</label><input id="examDate" type="date"></div>
 </div>
 </div>
 
 <div class="wizard-step hidden" data-step="2">
 <h3>Subjects and topics</h3>
-<p class="help">Add every subject and topic. You can add as many as needed.</p>
+<p class="help">Add every subject and topic.</p>
 <div id="subjects"></div>
 <button id="addSubjectButton" type="button" class="secondary small">+ Add subject</button>
 </div>
@@ -140,26 +150,12 @@ label{display:block;font-weight:bold;margin:12px 0 6px}
 <div class="wizard-step hidden" data-step="3">
 <h3>Study availability</h3>
 <div class="form-grid">
-<div>
-<label for="startTime">Daily start time</label>
-<input id="startTime" type="time" value="18:00">
+<div><label for="startTime">Daily start time</label><input id="startTime" type="time" value="18:00"></div>
+<div><label for="endTime">Daily end time</label><input id="endTime" type="time" value="20:00"></div>
+<div><label for="studyBlock">Study block length</label><input id="studyBlock" type="number" min="20" max="120" value="50"></div>
+<div><label for="breakMinutes">Break after each block</label><input id="breakMinutes" type="number" min="0" max="30" value="10"></div>
 </div>
-<div>
-<label for="endTime">Daily end time</label>
-<input id="endTime" type="time" value="20:00">
-</div>
-<div>
-<label for="studyBlock">Study block length</label>
-<input id="studyBlock" type="number" min="20" max="120" value="50">
-</div>
-<div>
-<label for="breakMinutes">Break after each block</label>
-<input id="breakMinutes" type="number" min="0" max="30" value="10">
-</div>
-</div>
-
 <h3>Available days</h3>
-<p class="help">Sunday is excluded by default. Select it if you want to study on Sundays.</p>
 <div class="checkbox-grid">
 <label class="check"><input class="day-check" data-day="1" type="checkbox" checked>Mon</label>
 <label class="check"><input class="day-check" data-day="2" type="checkbox" checked>Tue</label>
@@ -174,38 +170,24 @@ label{display:block;font-weight:bold;margin:12px 0 6px}
 <div class="wizard-step hidden" data-step="4">
 <h3>Planning preferences</h3>
 <div class="form-grid">
-<div>
-<label for="revisionRounds">Revision rounds</label>
-<input id="revisionRounds" type="number" min="0" max="3" value="2">
-</div>
-<div>
-<label for="revisionStyle">Revision order</label>
-<select id="revisionStyle">
-<option value="topic">Topic-wise rotation</option>
-<option value="subject">Subject-wise blocks</option>
-<option value="mixed">Mixed rotation</option>
-</select>
+<div><label for="revisionRounds">Revision rounds</label><input id="revisionRounds" type="number" min="0" max="3" value="2"></div>
+<div><label for="revisionStyle">Revision order</label>
+<select id="revisionStyle"><option value="topic">Topic-wise rotation</option><option value="subject">Subject-wise blocks</option><option value="mixed">Mixed rotation</option></select>
 </div>
 </div>
-
-<label class="check">
-<input id="mocksEnabled" type="checkbox">
-Include mock exams and mock-review sessions
-</label>
-
+<label class="check"><input id="mocksEnabled" type="checkbox">Include mock exams and reviews</label>
 <div id="mockPanel" class="hidden">
-<p class="help">Every mock exam automatically receives a review session.</p>
+<p class="help">Every mock exam receives a review session.</p>
 <div id="mocks"></div>
 <button id="addMockButton" type="button" class="secondary small">+ Add mock exam</button>
 </div>
 </div>
 
 <div id="setupMessage" class="message hidden"></div>
-
 <div class="button-row">
 <button id="backButton" type="button" class="secondary">Back</button>
 <button id="nextButton" type="button">Continue</button>
-<button id="createButton" type="button" class="hidden">Create complete study plan</button>
+<button id="createButton" type="button" class="hidden">Create study plan</button>
 </div>
 <button id="cancelButton" type="button" class="secondary">Cancel</button>
 </div>
@@ -215,25 +197,21 @@ Include mock exams and mock-review sessions
 <div class="card">
 <h2 id="planTitle"></h2>
 <p id="planGreeting" class="help"></p>
+<div id="syncStatus" class="sync-status"></div>
 <div id="summary" class="summary"></div>
 <div id="warnings"></div>
 </div>
 
 <section class="card">
 <h2>Today's schedule</h2>
-<p class="help">Today and overdue unfinished sessions appear here first.</p>
 <div id="todaySchedule"></div>
 </section>
 
 <section class="card">
 <h2>Complete study schedule</h2>
 <div class="toolbar">
-<label>Session type
-<select id="filterType"><option value="">All types</option></select>
-</label>
-<label>Subject
-<select id="filterSubject"><option value="">All subjects</option></select>
-</label>
+<label>Session type<select id="filterType"><option value="">All types</option></select></label>
+<label>Subject<select id="filterSubject"><option value="">All subjects</option></select></label>
 <label class="check"><input id="incompleteOnly" type="checkbox">Incomplete only</label>
 </div>
 <div id="fullSchedule"></div>
@@ -241,7 +219,7 @@ Include mock exams and mock-review sessions
 
 <div class="button-row">
 <button id="editButton" type="button" class="secondary">Edit plan</button>
-<button id="resetButton" type="button" class="danger">Reset all data</button>
+<button id="resetButton" type="button" class="danger">Delete cloud plan</button>
 </div>
 </section>
 </main>
@@ -251,34 +229,252 @@ Include mock exams and mock-review sessions
 <h2>Thanks for installing!</h2>
 <p>Thanks for installing Exam Buddy.</p>
 <p><strong>All the best for your next exam, buddy!</strong></p>
-<button id="closeWelcomeButton" type="button">Start planning</button>
+<button id="closeWelcomeButton" type="button">Continue</button>
 </div>
 </div>
 
 <script>
-const planKey="examBuddyPlanV1";
-const profileKey="examBuddyProfileV1";
+const SUPABASE_URL="https://jyfoyhwwoqscstwvjfdu.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_lcrmdm1MPIlNPJmgssPzgQ_w7BB-p4g";
+const supabaseClient=SUPABASE_URL.startsWith("https://")&&!SUPABASE_PUBLISHABLE_KEY.includes("PASTE_")
+  ?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY):null;
+
+const legacyPlanKey="examBuddyPlanV1";
+const legacyProfileKey="examBuddyProfileV1";
 const installKey="examBuddyWelcomeShownV1";
-let data=loadPlan();
-let profile=loadProfile();
-let currentStep=1;
+let user=null,profile=null,data=null,cloudPlanId=null,currentStep=1;
+let authMode="login",loadingUserId="",saveTimer=null;
 
-const $=value=>document.getElementById(value);
+const $=id=>document.getElementById(id);
 
-function loadPlan(){
-  try{return JSON.parse(localStorage.getItem(planKey)||"null")}catch(error){return null}
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,char=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[char]));
 }
 
-function loadProfile(){
-  try{return JSON.parse(localStorage.getItem(profileKey)||"null")}catch(error){return null}
+function showScreen(name){
+  ["loadingScreen","authScreen","onboarding","plan"].forEach(id=>{
+    $(id).classList.toggle("hidden",id!==name);
+  });
 }
 
-function savePlan(){
-  localStorage.setItem(planKey,JSON.stringify(data));
+function setAccount(){
+  const visible=Boolean(user);
+  $("accountActions").classList.toggle("hidden",!visible);
+  if(visible)$("userLabel").textContent=user.email||"Signed in";
 }
 
-function saveProfile(){
-  localStorage.setItem(profileKey,JSON.stringify(profile));
+function showAuthMessage(text,error=true){
+  const box=$("authMessage");
+  box.textContent=text;
+  box.classList.remove("hidden","error","success");
+  box.classList.add(error?"error":"success");
+}
+
+function showSetupMessage(text,error=true){
+  const box=$("setupMessage");
+  box.textContent=text;
+  box.classList.remove("hidden","error","success");
+  box.classList.add(error?"error":"success");
+}
+
+function clearSetupMessage(){$("setupMessage").classList.add("hidden")}
+
+function setSync(text,error=false){
+  const box=$("syncStatus");
+  box.textContent=text;
+  box.classList.toggle("error",error);
+}
+
+function setAuthMode(mode){
+  authMode=mode;
+  const register=mode==="register";
+  $("registerFields").classList.toggle("hidden",!register);
+  $("loginTab").classList.toggle("active",!register);
+  $("registerTab").classList.toggle("active",register);
+  $("authSubmit").textContent=register?"Create account":"Log in";
+  $("forgotButton").classList.toggle("hidden",register);
+  $("authMessage").classList.add("hidden");
+}
+
+function showAuth(){
+  user=null;profile=null;data=null;cloudPlanId=null;
+  setAccount();
+  $("standardAuthFields").classList.remove("hidden");
+  $("resetFields").classList.add("hidden");
+  setAuthMode("login");
+  showScreen("authScreen");
+}
+
+function showRecovery(){
+  $("standardAuthFields").classList.add("hidden");
+  $("resetFields").classList.remove("hidden");
+  showScreen("authScreen");
+  showAuthMessage("Enter a new password for your account.",false);
+}
+
+async function submitAuth(){
+  if(!supabaseClient){
+    showAuthMessage("Add your Supabase URL and publishable key in this file.");
+    return;
+  }
+
+  const email=$("authEmail").value.trim();
+  const password=$("authPassword").value;
+  if(!email||!email.includes("@")){showAuthMessage("Enter a valid email address.");return}
+  if(password.length<8){showAuthMessage("Password must contain at least 8 characters.");return}
+
+  $("authSubmit").disabled=true;
+  let result;
+  if(authMode==="register"){
+    const name=$("authName").value.trim();
+    if(!name){showAuthMessage("Enter your first name.");$("authSubmit").disabled=false;return}
+    result=await supabaseClient.auth.signUp({
+      email,password,options:{data:{first_name:name}}
+    });
+  }else{
+    result=await supabaseClient.auth.signInWithPassword({email,password});
+  }
+  $("authSubmit").disabled=false;
+
+  if(result.error){showAuthMessage(result.error.message);return}
+  if(!result.data.session){
+    showAuthMessage("Account created. Check your email to confirm your account.",false);
+  }
+}
+
+async function sendPasswordReset(){
+  if(!supabaseClient){showAuthMessage("Configure Supabase first.");return}
+  const email=$("authEmail").value.trim();
+  if(!email||!email.includes("@")){showAuthMessage("Enter your email address first.");return}
+  const result=await supabaseClient.auth.resetPasswordForEmail(email,{
+    redirectTo:window.location.href
+  });
+  if(result.error)showAuthMessage(result.error.message);
+  else showAuthMessage("Password reset instructions have been sent.",false);
+}
+
+async function updatePassword(){
+  const password=$("newPassword").value;
+  if(password.length<8){showAuthMessage("Password must contain at least 8 characters.");return}
+  const result=await supabaseClient.auth.updateUser({password});
+  if(result.error){showAuthMessage(result.error.message);return}
+  showAuthMessage("Password updated successfully.",false);
+  $("newPassword").value="";
+  if(user)await loadUser(user);
+}
+
+async function saveProfileToCloud(){
+  if(!user||!supabaseClient)return;
+  await supabaseClient.from("profiles").upsert({
+    id:user.id,
+    first_name:profile?.name||"",
+    email:user.email||"",
+    updated_at:new Date().toISOString()
+  });
+}
+
+function readLegacy(key){
+  try{return JSON.parse(localStorage.getItem(key)||"null")}catch(error){return null}
+}
+
+function clearLegacyData(){
+  localStorage.removeItem(legacyPlanKey);
+  localStorage.removeItem(legacyProfileKey);
+}
+
+async function loadUser(currentUser){
+  if(!currentUser||loadingUserId===currentUser.id)return;
+  loadingUserId=currentUser.id;
+  user=currentUser;
+  setAccount();
+  showScreen("loadingScreen");
+
+  try{
+    const profileResult=await supabaseClient.from("profiles")
+      .select("first_name,email").eq("id",user.id).maybeSingle();
+    if(profileResult.error)throw profileResult.error;
+
+    const legacyProfile=readLegacy(legacyProfileKey);
+    const fallback=user.user_metadata?.first_name||legacyProfile?.name||user.email?.split("@")[0]||"Student";
+    profile={
+      name:profileResult.data?.first_name||fallback,
+      email:user.email||""
+    };
+    await saveProfileToCloud();
+
+    const plansResult=await supabaseClient.from("study_plans")
+      .select("id,name,exam_date,plan_data")
+      .eq("user_id",user.id)
+      .order("updated_at",{ascending:false})
+      .limit(1);
+    if(plansResult.error)throw plansResult.error;
+
+    const cloudPlan=plansResult.data?.[0];
+    if(cloudPlan?.plan_data?.settings){
+      cloudPlanId=cloudPlan.id;
+      data=cloudPlan.plan_data;
+      renderPlan();
+    }else{
+      const legacy=readLegacy(legacyPlanKey);
+      if(legacy?.settings){
+        data=legacy;
+        const migrated=await saveCloudPlan();
+        if(migrated)clearLegacyData();
+        renderPlan();
+      }else{
+        startNewPlan();
+      }
+    }
+  }catch(error){
+    user=null;setAccount();showScreen("authScreen");
+    showAuthMessage(`Could not load your account: ${error.message}`);
+  }finally{
+    loadingUserId="";
+  }
+}
+
+async function saveCloudPlan(){
+  if(!supabaseClient||!user||!data)return false;
+  setSync("Saving to cloud...");
+  const common={
+    name:data.settings.name,
+    exam_date:data.settings.examDate||null,
+    plan_data:data,
+    updated_at:new Date().toISOString()
+  };
+  let result;
+  if(cloudPlanId){
+    result=await supabaseClient.from("study_plans").update(common)
+      .eq("id",cloudPlanId).eq("user_id",user.id).select("id").single();
+  }else{
+    result=await supabaseClient.from("study_plans")
+      .insert({...common,user_id:user.id}).select("id").single();
+  }
+  if(result.error){
+    setSync(`Cloud save failed: ${result.error.message}`,true);
+    return false;
+  }
+  cloudPlanId=result.data.id;
+  setSync("Saved securely to cloud");
+  return true;
+}
+
+function queueCloudSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>saveCloudPlan(),400);
+}
+
+function setInitialDates(){
+  $("startDate").value=dateKey(new Date());
+  $("examDate").value=dateKey(addDays(new Date(),100));
+}
+
+function startNewPlan(){
+  data=null;cloudPlanId=null;
+  $("subjects").innerHTML="";$("mocks").innerHTML="";
+  setInitialDates();addSubject();showScreen("onboarding");showStep(1);
 }
 
 function dateKey(value){
@@ -292,9 +488,7 @@ function parseDate(value){
 }
 
 function addDays(value,amount){
-  const d=new Date(value);
-  d.setDate(d.getDate()+amount);
-  return d;
+  const d=new Date(value);d.setDate(d.getDate()+amount);return d;
 }
 
 function formatDate(value){
@@ -303,66 +497,12 @@ function formatDate(value){
   });
 }
 
-function escapeHtml(value){
-  return String(value??"").replace(/[&<>"']/g,char=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  }[char]));
-}
-
 function timeToMinutes(value){
-  const [hours,minutes]=value.split(":").map(Number);
-  return hours*60+minutes;
+  const [hours,minutes]=value.split(":").map(Number);return hours*60+minutes;
 }
 
 function minutesToTime(value){
   return `${String(Math.floor(value/60)).padStart(2,"0")}:${String(value%60).padStart(2,"0")}`;
-}
-
-function showScreen(name){
-  $("welcome").classList.toggle("hidden",name!=="welcome");
-  $("onboarding").classList.toggle("hidden",name!=="onboarding");
-  $("plan").classList.toggle("hidden",name!=="plan");
-}
-
-function showMessage(text,error=true){
-  const box=$("setupMessage");
-  box.textContent=text;
-  box.classList.remove("hidden","error","success");
-  box.classList.add(error?"error":"success");
-}
-
-function clearMessage(){
-  $("setupMessage").classList.add("hidden");
-}
-
-function setInitialDates(){
-  $("startDate").value=dateKey(new Date());
-  $("examDate").value=dateKey(addDays(new Date(),100));
-}
-
-function beginPlanning(name,email=""){
-  profile={name:name.trim()||"Guest",email:email.trim()};
-  saveProfile();
-  setInitialDates();
-  if(!$("subjects").children.length)addSubject();
-  showScreen("onboarding");
-  showStep(1);
-}
-
-function startPlanning(){
-  const name=$("profileName").value.trim();
-  const email=$("profileEmail").value.trim();
-  if(!name){
-    $("profileMessage").textContent="Enter your first name or continue as a guest.";
-    $("profileMessage").classList.remove("hidden");
-    return;
-  }
-  if(email&&!email.includes("@")){
-    $("profileMessage").textContent="Enter a valid email address or leave it blank.";
-    $("profileMessage").classList.remove("hidden");
-    return;
-  }
-  beginPlanning(name,email);
 }
 
 function showStep(step){
@@ -374,37 +514,29 @@ function showStep(step){
   $("backButton").classList.toggle("hidden",step===1);
   $("nextButton").classList.toggle("hidden",step===4);
   $("createButton").classList.toggle("hidden",step!==4);
-  clearMessage();
+  clearSetupMessage();
 }
 
 function addSubject(subject={}){
   const row=document.createElement("div");
   row.className="subject-row";
-  row.innerHTML=`
-    <div class="subject-head">
-      <input class="subject-name" placeholder="Subject name">
-      <button type="button" class="remove-subject">Remove</button>
-    </div>
-    <div class="topics"></div>
-    <button type="button" class="secondary small add-topic">+ Add topic</button>`;
+  row.innerHTML=`<div class="subject-head">
+    <input class="subject-name" placeholder="Subject name">
+    <button type="button" class="remove-subject">Remove</button>
+  </div><div class="topics"></div>
+  <button type="button" class="secondary small add-topic">+ Add topic</button>`;
   row.querySelector(".subject-name").value=subject.name||"";
   row.querySelector(".remove-subject").onclick=()=>row.remove();
   row.querySelector(".add-topic").onclick=event=>addTopic(event.target);
   $("subjects").appendChild(row);
-  const topics=subject.topics?.length?subject.topics:[{}];
-  topics.forEach(topic=>addTopic(row.querySelector(".add-topic"),topic));
+  (subject.topics?.length?subject.topics:[{}]).forEach(topic=>addTopic(row.querySelector(".add-topic"),topic));
 }
 
 function addTopic(button,topic={}){
   const row=document.createElement("div");
   row.className="topic-row";
-  row.innerHTML=`
-    <input class="topic-name" placeholder="Topic name">
-    <select class="topic-difficulty">
-      <option value="Easy">Easy</option>
-      <option value="Medium" selected>Medium</option>
-      <option value="Hard">Hard</option>
-    </select>
+  row.innerHTML=`<input class="topic-name" placeholder="Topic name">
+    <select class="topic-difficulty"><option>Easy</option><option selected>Medium</option><option>Hard</option></select>
     <button type="button" class="remove-topic">×</button>`;
   row.querySelector(".topic-name").value=topic.name||"";
   row.querySelector(".topic-difficulty").value=topic.difficulty||"Medium";
@@ -415,20 +547,13 @@ function addTopic(button,topic={}){
 function addMock(mock={}){
   const row=document.createElement("div");
   row.className="mock-row";
-  row.innerHTML=`
-    <div class="subject-head">
-      <select class="mock-type">
-        <option>Full syllabus</option>
-        <option>Subject-wise</option>
-        <option>Topic-wise</option>
-      </select>
-      <button type="button" class="remove-subject">Remove</button>
-    </div>
-    <div class="mock-grid">
-      <input class="mock-scope" placeholder="Subject or topic, if applicable">
-      <input class="mock-duration" type="number" min="20" max="300" value="120">
-      <span class="muted">minutes</span>
-    </div>`;
+  row.innerHTML=`<div class="subject-head">
+    <select class="mock-type"><option>Full syllabus</option><option>Subject-wise</option><option>Topic-wise</option></select>
+    <button type="button" class="remove-subject">Remove</button>
+  </div><div class="mock-grid">
+    <input class="mock-scope" placeholder="Subject or topic, if applicable">
+    <input class="mock-duration" type="number" min="20" max="300" value="120">
+    <span class="muted">minutes</span></div>`;
   row.querySelector(".mock-type").value=mock.type||"Full syllabus";
   row.querySelector(".mock-scope").value=mock.scope||"";
   row.querySelector(".mock-duration").value=mock.duration||120;
@@ -456,42 +581,34 @@ function collectMocks(){
 
 function validateStep(step){
   if(step===1){
-    if(!$("examName").value.trim())return "Enter an exam name.";
-    if(!$("startDate").value||!$("examDate").value)return "Enter both study and exam dates.";
-    if(parseDate($("startDate").value)>=parseDate($("examDate").value))return "The exam date must be after the study start date.";
+    if(!$("examName").value.trim())return"Enter an exam name.";
+    if(!$("startDate").value||!$("examDate").value)return"Enter both dates.";
+    if(parseDate($("startDate").value)>=parseDate($("examDate").value))return"Exam date must be after the study start date.";
   }
-
   if(step===2){
     const rows=[...document.querySelectorAll(".subject-row")];
-    if(!rows.length)return "Add at least one subject.";
+    if(!rows.length)return"Add at least one subject.";
     for(const row of rows){
-      if(!row.querySelector(".subject-name").value.trim())return "Complete or remove every subject row.";
+      if(!row.querySelector(".subject-name").value.trim())return"Complete or remove every subject row.";
       const topics=[...row.querySelectorAll(".topic-name")];
-      if(!topics.length||topics.some(topic=>!topic.value.trim()))return "Complete or remove every topic row.";
+      if(!topics.length||topics.some(topic=>!topic.value.trim()))return"Complete or remove every topic row.";
     }
   }
-
   if(step===3){
-    if(timeToMinutes($("startTime").value)>=timeToMinutes($("endTime").value))return "The end time must be later than the start time.";
-    if(Number($("studyBlock").value)<20)return "Study blocks must be at least 20 minutes.";
-    if(Number($("breakMinutes").value)<0)return "Break time cannot be negative.";
-    if(!document.querySelectorAll(".day-check:checked").length)return "Select at least one study day.";
+    if(timeToMinutes($("startTime").value)>=timeToMinutes($("endTime").value))return"End time must be later than start time.";
+    if(Number($("studyBlock").value)<20)return"Study blocks must be at least 20 minutes.";
+    if(Number($("breakMinutes").value)<0)return"Break time cannot be negative.";
+    if(!document.querySelectorAll(".day-check:checked").length)return"Select at least one study day.";
   }
-
-  return "";
+  return"";
 }
 
 function getSettings(){
   return{
-    name:$("examName").value.trim(),
-    startDate:$("startDate").value,
-    examDate:$("examDate").value,
-    startTime:$("startTime").value,
-    endTime:$("endTime").value,
-    studyBlock:Number($("studyBlock").value),
-    breakMinutes:Number($("breakMinutes").value),
-    revisionRounds:Number($("revisionRounds").value),
-    revisionStyle:$("revisionStyle").value,
+    name:$("examName").value.trim(),startDate:$("startDate").value,examDate:$("examDate").value,
+    startTime:$("startTime").value,endTime:$("endTime").value,
+    studyBlock:Number($("studyBlock").value),breakMinutes:Number($("breakMinutes").value),
+    revisionRounds:Number($("revisionRounds").value),revisionStyle:$("revisionStyle").value,
     days:[...document.querySelectorAll(".day-check:checked")].map(item=>Number(item.dataset.day)),
     includeMocks:$("mocksEnabled").checked
   };
@@ -508,8 +625,7 @@ function studyDates(settings){
 function buildSlots(settings){
   const slots=[];
   studyDates(settings).forEach(date=>{
-    let cursor=timeToMinutes(settings.startTime);
-    const end=timeToMinutes(settings.endTime);
+    let cursor=timeToMinutes(settings.startTime),end=timeToMinutes(settings.endTime);
     while(cursor+settings.studyBlock<=end){
       slots.push({date,start:minutesToTime(cursor),end:minutesToTime(cursor+settings.studyBlock)});
       cursor+=settings.studyBlock+settings.breakMinutes;
@@ -519,8 +635,7 @@ function buildSlots(settings){
 }
 
 function topicRotation(subjects){
-  const result=[];
-  const maximum=Math.max(...subjects.map(subject=>subject.topics.length));
+  const result=[],maximum=Math.max(...subjects.map(subject=>subject.topics.length));
   for(let index=0;index<maximum;index++){
     subjects.forEach(subject=>{
       if(subject.topics[index])result.push({subject:subject.name,topic:subject.topics[index]});
@@ -532,67 +647,45 @@ function topicRotation(subjects){
 function createSessions(settings,subjects,mocks){
   const sessions=[];
   topicRotation(subjects).forEach(item=>sessions.push({
-    phase:"Initial coverage",kind:"New topic",subject:item.subject,
-    topic:item.topic.name,title:`New topic: ${item.topic.name}`,
-    key:`new|${item.subject}|${item.topic.name}`
+    phase:"Initial coverage",kind:"New topic",subject:item.subject,topic:item.topic.name,
+    title:`New topic: ${item.topic.name}`,key:`new|${item.subject}|${item.topic.name}`
   }));
-
   for(let round=1;round<=settings.revisionRounds;round++){
     let items=settings.revisionStyle==="subject"
       ?subjects.flatMap(subject=>subject.topics.map(topic=>({subject:subject.name,topic})))
       :topicRotation(subjects);
     if(settings.revisionStyle==="mixed"&&round%2===0)items=[...items].reverse();
     items.forEach(item=>sessions.push({
-      phase:`Revision ${round}`,kind:`Revision ${round}`,
-      subject:item.subject,topic:item.topic.name,
-      title:`Revision ${round}: ${item.topic.name}`,
-      key:`revision|${round}|${item.subject}|${item.topic.name}`
+      phase:`Revision ${round}`,kind:`Revision ${round}`,subject:item.subject,topic:item.topic.name,
+      title:`Revision ${round}: ${item.topic.name}`,key:`revision|${round}|${item.subject}|${item.topic.name}`
     }));
-    if(round===1&&settings.includeMocks){
-      mocks.forEach((mock,index)=>{
-        const parts=Math.max(1,Math.ceil(mock.duration/settings.studyBlock));
-        const scope=mock.scope||mock.type;
-        for(let part=1;part<=parts;part++)sessions.push({
-          phase:"Mocks",kind:"Mock exam",
-          subject:mock.type==="Subject-wise"?scope:"",
-          topic:mock.type==="Topic-wise"?scope:"",
-          title:`Mock ${index+1}: ${scope} (${part}/${parts})`,
-          key:`mock|${index}|${part}`
-        });
-        sessions.push({
-          phase:"Mocks",kind:"Mock review",
-          subject:"",topic:"",
-          title:`Review mock ${index+1} and record mistakes`,
-          key:`mock-review|${index}`
-        });
+    if(round===1&&settings.includeMocks)mocks.forEach((mock,index)=>{
+      const parts=Math.max(1,Math.ceil(mock.duration/settings.studyBlock)),scope=mock.scope||mock.type;
+      for(let part=1;part<=parts;part++)sessions.push({
+        phase:"Mocks",kind:"Mock exam",subject:mock.type==="Subject-wise"?scope:"",
+        topic:mock.type==="Topic-wise"?scope:"",title:`Mock ${index+1}: ${scope} (${part}/${parts})`,
+        key:`mock|${index}|${part}`
       });
-    }
+      sessions.push({phase:"Mocks",kind:"Mock review",subject:"",topic:"",
+        title:`Review mock ${index+1} and record mistakes`,key:`mock-review|${index}`});
+    });
   }
-
-  if(settings.includeMocks&&settings.revisionRounds===0){
-    mocks.forEach((mock,index)=>sessions.push({
-      phase:"Mocks",kind:"Mock exam",subject:"",topic:mock.scope||mock.type,
-      title:`Mock ${index+1}: ${mock.scope||mock.type}`,
-      key:`mock|${index}|1`
-    }));
-  }
-
+  if(settings.includeMocks&&settings.revisionRounds===0)mocks.forEach((mock,index)=>sessions.push({
+    phase:"Mocks",kind:"Mock exam",subject:"",topic:mock.scope||mock.type,
+    title:`Mock ${index+1}: ${mock.scope||mock.type}`,key:`mock|${index}|1`
+  }));
   return sessions;
 }
 
 function createSchedule(settings,subjects,mocks,oldSchedule){
-  const slots=buildSlots(settings);
-  const sessions=createSessions(settings,subjects,mocks);
+  const slots=buildSlots(settings),sessions=createSessions(settings,subjects,mocks);
   const oldDone=new Map((oldSchedule||[]).map(item=>[item.key,item.done]));
-  const schedule=[];
-  const reserve=Math.floor(slots.length*.1);
+  const schedule=[],warnings=[],reserve=Math.floor(slots.length*.1);
   const usable=Math.max(0,slots.length-reserve);
-  const warnings=[];
   const activeCount=Math.min(slots.length,Math.max(usable,sessions.length));
-
-  if(!slots.length)warnings.push("No study blocks fit inside the selected daily time window.");
+  if(!slots.length)warnings.push("No study blocks fit inside the selected time window.");
   if(sessions.length>slots.length)warnings.push(`${sessions.length-slots.length} sessions do not fit before the exam.`);
-  if(sessions.length>usable&&sessions.length<=slots.length)warnings.push("Catch-up time was used because the plan is nearly full.");
+  if(sessions.length>usable&&sessions.length<=slots.length)warnings.push("The plan is nearly full; catch-up time was used.");
 
   const groups=[];
   sessions.forEach(session=>{
@@ -601,95 +694,65 @@ function createSchedule(settings,subjects,mocks,oldSchedule){
     group.items.push(session);
   });
 
-  let cursor=0;
-  const used=new Set();
+  let cursor=0;const used=new Set();
   const extra=Math.max(0,activeCount-sessions.length);
   const weights=groups.reduce((sum,group)=>sum+(group.phase==="Initial coverage"?4:group.phase==="Mocks"?2:3),0);
 
   groups.forEach((group,index)=>{
     const weight=group.phase==="Initial coverage"?4:group.phase==="Mocks"?2:3;
-    const share=index===groups.length-1
-      ?extra
-      :Math.floor(extra*weight/weights);
+    const share=index===groups.length-1?extra:Math.floor(extra*weight/weights);
     const range=group.items.length+share;
-
     group.items.forEach((session,itemIndex)=>{
       const slotIndex=cursor+Math.floor(itemIndex*range/group.items.length);
       if(slotIndex<slots.length){
         used.add(slotIndex);
-        schedule.push({
-          ...session,...slots[slotIndex],scheduled:true,
-          done:Boolean(oldDone.get(session.key))
-        });
+        schedule.push({...session,...slots[slotIndex],scheduled:true,done:Boolean(oldDone.get(session.key))});
       }
     });
     cursor+=range;
   });
 
-  sessions.slice(schedule.length).forEach(session=>{
+  sessions.slice(schedule.length).forEach(session=>schedule.push({
+    ...session,date:settings.examDate,start:"",end:"",scheduled:false,
+    done:Boolean(oldDone.get(session.key))
+  }));
+
+  for(let index=0;index<activeCount;index++)if(!used.has(index)){
+    const slot=slots[index];
     schedule.push({
-      ...session,date:settings.examDate,start:"",end:"",
-      scheduled:false,done:Boolean(oldDone.get(session.key))
+      phase:"Catch-up",kind:"Catch-up",subject:"",topic:"",
+      title:"Catch-up or restudy a difficult topic",key:`catchup|${slot.date}|${slot.start}`,
+      ...slot,scheduled:true,done:Boolean(oldDone.get(`catchup|${slot.date}|${slot.start}`))
     });
-  });
-
-  for(let index=0;index<activeCount;index++){
-    if(!used.has(index)){
-      const slot=slots[index];
-      schedule.push({
-        phase:"Catch-up",kind:"Catch-up",subject:"",topic:"",
-        title:"Catch-up or restudy a difficult topic",
-        key:`catchup|${slot.date}|${slot.start}`,
-        ...slot,scheduled:true,done:Boolean(oldDone.get(`catchup|${slot.date}|${slot.start}`))
-      });
-    }
   }
-
-  return{
-    schedule,
-    warnings,
-    capacity:slots.length,
-    required:sessions.length,
-    studyDays:new Set(slots.map(slot=>slot.date)).size
-  };
+  return{schedule,warnings,capacity:slots.length,required:sessions.length,
+    studyDays:new Set(slots.map(slot=>slot.date)).size};
 }
 
-function generatePlan(){
-  const stepMessage=validateStep(1)||validateStep(2)||validateStep(3);
-  if(stepMessage){showMessage(stepMessage);return}
-
+async function generatePlan(){
+  const problem=validateStep(1)||validateStep(2)||validateStep(3);
+  if(problem){showSetupMessage(problem);return}
   const settings=getSettings();
   if(settings.revisionRounds<0||settings.revisionRounds>3){
-    showMessage("Revision rounds must be between 0 and 3.");
-    return;
+    showSetupMessage("Revision rounds must be between 0 and 3.");return;
   }
-
-  const subjects=collectSubjects();
-  const mocks=$("mocksEnabled").checked?collectMocks():[];
+  const subjects=collectSubjects(),mocks=$("mocksEnabled").checked?collectMocks():[];
   if($("mocksEnabled").checked&&!mocks.length){
-    showMessage("Add at least one mock exam or switch mock exams off.");
-    return;
+    showSetupMessage("Add at least one mock exam or switch mock exams off.");return;
   }
-
   const built=createSchedule(settings,subjects,mocks,data?.schedule);
-  data={
-    settings,subjects,mocks,
-    schedule:built.schedule,
-    warnings:built.warnings,
-    capacity:built.capacity,
-    required:built.required,
-    studyDays:built.studyDays
-  };
-  savePlan();
+  data={settings,subjects,mocks,schedule:built.schedule,warnings:built.warnings,
+    capacity:built.capacity,required:built.required,studyDays:built.studyDays};
+  const saved=await saveCloudPlan();
   renderPlan();
+  if(!saved)setSync("Plan could not be saved to cloud.",true);
 }
 
 function renderPlan(){
-  showScreen("plan");
+  showScreen("plan");setAccount();
   const scheduled=data.schedule.filter(item=>item.scheduled);
   const completed=scheduled.filter(item=>item.done).length;
   const percent=scheduled.length?Math.round(completed/scheduled.length*100):0;
-
   $("planTitle").textContent=data.settings.name;
   $("planGreeting").textContent=`Good luck, ${profile?.name||"student"}!`;
   $("summary").innerHTML=`
@@ -697,14 +760,11 @@ function renderPlan(){
     <div class="stat-card"><strong>${data.capacity}</strong>available blocks</div>
     <div class="stat-card"><strong>${data.required}</strong>planned sessions</div>
     <div class="stat-card"><strong>${percent}%</strong>completed</div>`;
-
-  $("warnings").innerHTML=data.warnings.length
-    ?`<div class="message">${data.warnings.map(escapeHtml).join("<br>")}</div>`
-    :`<div class="message success">Your complete study plan fits within the available study time.</div>`;
-
-  populateFilters();
-  renderToday();
-  renderFullSchedule();
+  const warnings=data.warnings||[];
+  $("warnings").innerHTML=warnings.length
+    ?`<div class="message">${warnings.map(escapeHtml).join("<br>")}</div>`
+    :`<div class="message success">Your study plan fits within the available study time.</div>`;
+  populateFilters();renderToday();renderFullSchedule();
 }
 
 function populateFilters(){
@@ -717,48 +777,33 @@ function populateFilters(){
 function itemHtml(item){
   const time=item.scheduled?`${item.start}–${item.end}`:"Not scheduled before exam";
   const details=[item.kind,item.subject,item.topic].filter(Boolean).join(" · ");
-  return`
-    <div class="task ${item.done?"done":""}">
-      ${item.scheduled?`<input type="checkbox" data-key="${escapeHtml(item.key)}" ${item.done?"checked":""}>`:""}
-      <div>
-        <div class="task-title">${escapeHtml(item.title)}</div>
-        <div class="task-meta">${escapeHtml(time)}${details?` · ${escapeHtml(details)}`:""}</div>
-      </div>
-    </div>`;
+  return`<div class="task ${item.done?"done":""}">
+    ${item.scheduled?`<input type="checkbox" data-key="${escapeHtml(item.key)}" ${item.done?"checked":""}>`:""}
+    <div><div class="task-title">${escapeHtml(item.title)}</div>
+    <div class="task-meta">${escapeHtml(time)}${details?` · ${escapeHtml(details)}`:""}</div></div>
+  </div>`;
 }
 
 function renderToday(){
   const today=dateKey(new Date());
-  const items=data.schedule.filter(item=>
-    item.scheduled&&((item.date===today)||(item.date<today&&!item.done))
-  );
-  $("todaySchedule").innerHTML=items.length
-    ?items.map(itemHtml).join("")
+  const items=data.schedule.filter(item=>item.scheduled&&(item.date===today||(item.date<today&&!item.done)));
+  $("todaySchedule").innerHTML=items.length?items.map(itemHtml).join("")
     :`<div class="message">No sessions are scheduled for today.</div>`;
   bindTaskChecks();
 }
 
 function renderFullSchedule(){
-  const type=$("filterType").value;
-  const subject=$("filterSubject").value;
+  const type=$("filterType").value,subject=$("filterSubject").value;
   const incomplete=$("incompleteOnly").checked;
   const items=data.schedule.filter(item=>
-    (!type||item.kind===type)&&
-    (!subject||item.subject===subject)&&
-    (!incomplete||!item.done)
+    (!type||item.kind===type)&&(!subject||item.subject===subject)&&(!incomplete||!item.done)
   ).sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start));
-
-  if(!items.length){
-    $("fullSchedule").innerHTML=`<div class="message">No sessions match these filters.</div>`;
-    return;
-  }
-
+  if(!items.length){$("fullSchedule").innerHTML=`<div class="message">No sessions match these filters.</div>`;return}
   let previous="";
   $("fullSchedule").innerHTML=items.map(item=>{
     const heading=item.scheduled?formatDate(item.date):"Not scheduled before exam";
     const title=heading===previous?"":`<h3 class="day-heading">${escapeHtml(heading)}</h3>`;
-    previous=heading;
-    return title+itemHtml(item);
+    previous=heading;return title+itemHtml(item);
   }).join("");
   bindTaskChecks();
 }
@@ -767,72 +812,66 @@ function bindTaskChecks(){
   document.querySelectorAll(".task input[type=checkbox]").forEach(box=>{
     box.onchange=()=>{
       const item=data.schedule.find(entry=>entry.key===box.dataset.key);
-      if(item){
-        item.done=box.checked;
-        savePlan();
-        renderPlan();
-      }
+      if(item){item.done=box.checked;renderPlan();queueCloudSave()}
     };
   });
 }
 
 function loadForm(){
   const settings=data.settings;
-  $("examName").value=settings.name;
-  $("startDate").value=settings.startDate;
-  $("examDate").value=settings.examDate;
-  $("startTime").value=settings.startTime;
-  $("endTime").value=settings.endTime;
-  $("studyBlock").value=settings.studyBlock;
-  $("breakMinutes").value=settings.breakMinutes;
-  $("revisionRounds").value=settings.revisionRounds;
-  $("revisionStyle").value=settings.revisionStyle;
+  $("examName").value=settings.name;$("startDate").value=settings.startDate;$("examDate").value=settings.examDate;
+  $("startTime").value=settings.startTime;$("endTime").value=settings.endTime;
+  $("studyBlock").value=settings.studyBlock;$("breakMinutes").value=settings.breakMinutes;
+  $("revisionRounds").value=settings.revisionRounds;$("revisionStyle").value=settings.revisionStyle;
   $("mocksEnabled").checked=settings.includeMocks;
-  document.querySelectorAll(".day-check").forEach(box=>{
-    box.checked=settings.days.includes(Number(box.dataset.day));
-  });
-  $("subjects").innerHTML="";
-  data.subjects.forEach(addSubject);
-  $("mocks").innerHTML="";
-  data.mocks.forEach(addMock);
-  toggleMockPanel();
+  document.querySelectorAll(".day-check").forEach(box=>box.checked=settings.days.includes(Number(box.dataset.day)));
+  $("subjects").innerHTML="";data.subjects.forEach(addSubject);
+  $("mocks").innerHTML="";data.mocks.forEach(addMock);toggleMockPanel();
 }
 
 function editPlan(){
-  loadForm();
-  showScreen("onboarding");
-  showStep(1);
-  window.scrollTo({top:0,behavior:"smooth"});
+  loadForm();showScreen("onboarding");showStep(1);window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function toggleMockPanel(){
   $("mockPanel").classList.toggle("hidden",!$("mocksEnabled").checked);
 }
 
-function resetPlan(){
-  if(confirm("Delete this study plan and all saved progress?")){
-    localStorage.removeItem(planKey);
-    location.reload();
+async function resetPlan(){
+  if(!confirm("Delete this cloud study plan and all progress?"))return;
+  if(cloudPlanId){
+    const result=await supabaseClient.from("study_plans").delete()
+      .eq("id",cloudPlanId).eq("user_id",user.id);
+    if(result.error){setSync(`Delete failed: ${result.error.message}`,true);return}
   }
+  startNewPlan();
 }
 
-$("startButton").onclick=startPlanning;
-$("guestButton").onclick=()=>beginPlanning("Guest");
+async function logout(){
+  if(!supabaseClient)return;
+  await supabaseClient.auth.signOut({scope:"local"});
+}
+
+function dateIsConfigured(){
+  return SUPABASE_URL.startsWith("https://")&&!SUPABASE_PUBLISHABLE_KEY.includes("PASTE_");
+}
+
+$("loginTab").onclick=()=>setAuthMode("login");
+$("registerTab").onclick=()=>setAuthMode("register");
+$("authSubmit").onclick=submitAuth;
+$("forgotButton").onclick=sendPasswordReset;
+$("updatePasswordButton").onclick=updatePassword;
+$("logoutButton").onclick=logout;
 $("addSubjectButton").onclick=()=>addSubject();
 $("addMockButton").onclick=()=>addMock();
 $("mocksEnabled").onchange=toggleMockPanel;
-$("backButton").onclick=()=>{
-  if(currentStep>1)showStep(currentStep-1);
-};
+$("backButton").onclick=()=>{if(currentStep>1)showStep(currentStep-1)};
 $("nextButton").onclick=()=>{
   const problem=validateStep(currentStep);
-  if(problem){showMessage(problem);return}
-  showStep(currentStep+1);
+  if(problem)showSetupMessage(problem);else showStep(currentStep+1);
 };
 $("createButton").onclick=generatePlan;
-$("cancelButton").onclick=()=>{
-  if(data)renderPlan();else showScreen("welcome");
-};
+$("cancelButton").onclick=()=>data?renderPlan():showAuth();
 $("editButton").onclick=editPlan;
 $("resetButton").onclick=resetPlan;
 $("filterType").onchange=renderFullSchedule;
@@ -843,17 +882,25 @@ $("closeWelcomeButton").onclick=()=>{
   $("welcomeModal").classList.add("hidden");
 };
 
-if(data){
-  renderPlan();
+if(!dateIsConfigured()){
+  showScreen("authScreen");
+  showAuthMessage("Add your Supabase Project URL and publishable key near the top of this file.");
 }else{
-  setInitialDates();
-  addSubject();
-  showScreen("welcome");
+  supabaseClient.auth.onAuthStateChange((event,session)=>{
+    if(event==="SIGNED_OUT"){showAuth();return}
+    if(event==="PASSWORD_RECOVERY"){user=session?.user||user;showRecovery();return}
+    if(event==="SIGNED_IN"&&session)setTimeout(()=>loadUser(session.user),0);
+  });
+
+  (async()=>{
+    const result=await supabaseClient.auth.getSession();
+    if(result.error){showAuth();showAuthMessage(result.error.message)}
+    else if(result.data.session)await loadUser(result.data.session.user);
+    else showAuth();
+  })();
 }
 
-if(!localStorage.getItem(installKey)){
-  $("welcomeModal").classList.remove("hidden");
-}
+if(!localStorage.getItem(installKey))$("welcomeModal").classList.remove("hidden");
 </script>
 </body>
 </html>
