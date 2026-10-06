@@ -691,7 +691,14 @@ function setInitialDates(){
 id("addSubjectButton").addEventListener("click",()=>addSubject());
 id("addMockButton").addEventListener("click",()=>addMock());
 id("mocksEnabled").addEventListener("change",toggleMockPanel);
-id("createButton").addEventListener("click",generatePlan);
+id("createButton").addEventListener("click",function(){
+  try{
+    generatePlan();
+  }catch(error){
+    console.error(error);
+    showSetupMessage("Could not create the plan: "+error.message);
+  }
+});
 id("editButton").addEventListener("click",editPlan);
 id("resetButton").addEventListener("click",resetPlan);
 id("filterType").addEventListener("change",renderFullSchedule);
