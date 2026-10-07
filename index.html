@@ -677,57 +677,175 @@ function createSessions(settings,subjects,mocks){
   return sessions;
 }
 
+
 function createSchedule(settings,subjects,mocks,oldSchedule){
-  const slots=buildSlots(settings),sessions=createSessions(settings,subjects,mocks);
+  const slots=buildSlots(settings);
+  const sessions=createSessions(settings,subjects,mocks);
   const oldDone=new Map((oldSchedule||[]).map(item=>[item.key,item.done]));
-  const schedule=[],warnings=[],reserve=Math.floor(slots.length*.1);
+  const singleTopicPlan=subjects.length===1&&subjects[0].topics.length===1;
+  const reserve=singleTopicPlan?0:Math.floor(slots.length*.1);
   const usable=Math.max(0,slots.length-reserve);
-  const activeCount=Math.min(slots.length,Math.max(usable,sessions.length));
-  if(!slots.length)warnings.push("No study blocks fit inside the selected time window.");
-  if(sessions.length>slots.length)warnings.push(`${sessions.length-slots.length} sessions do not fit before the exam.`);
-  if(sessions.length>usable&&sessions.length<=slots.length)warnings.push("The plan is nearly full; catch-up time was used.");
+  const warnings=[];
+  const activeCount=singleTopicPlan
+    ?slots.length
+    :Math.min(slots.length,Math.max(usable,sessions.length));
+
+  if(!slots.length)warnings.push("No study blocks fit inside the selected daily time window.");
+  if(sessions.length>slots.length){
+    warnings.push(`${sessions.length-slots.length} sessions do not fit before the exam.`);
+  }
+  if(!singleTopicPlan&&sessions.length>usable&&sessions.length<=slots.length){
+    warnings.push("Catch-up time was used because the plan is nearly full.");
+  }
 
   const groups=[];
   sessions.forEach(session=>{
     let group=groups.find(item=>item.phase===session.phase);
-    if(!group){group={phase:session.phase,items:[]};groups.push(group)}
+    if(!group){
+      group={phase:session.phase,items:[]};
+      groups.push(group);
+    }
     group.items.push(session);
   });
 
-  let cursor=0;const used=new Set();
+  let cursor=0;
+  const used=new Set();
   const extra=Math.max(0,activeCount-sessions.length);
-  const weights=groups.reduce((sum,group)=>sum+(group.phase==="Initial coverage"?4:group.phase==="Mocks"?2:3),0);
+  const weights=groups.reduce((sum,group)=>{
+    return sum+(group.phase==="Initial coverage"
+      ?4
+      :group.phase==="Mocks"
+        ?2
+        :3);
+  },0);
 
   groups.forEach((group,index)=>{
-    const weight=group.phase==="Initial coverage"?4:group.phase==="Mocks"?2:3;
-    const share=index===groups.length-1?extra:Math.floor(extra*weight/weights);
+    const weight=group.phase==="Initial coverage"
+      ?4
+      :group.phase==="Mocks"
+        ?2
+        :3;
+
+    const share=index===groups.length-1
+      ?extra
+      :Math.floor(extra*weight/weights);
+
     const range=group.items.length+share;
+
     group.items.forEach((session,itemIndex)=>{
       const slotIndex=cursor+Math.floor(itemIndex*range/group.items.length);
+
       if(slotIndex<slots.length){
         used.add(slotIndex);
-        schedule.push({...session,...slots[slotIndex],scheduled:true,done:Boolean(oldDone.get(session.key))});
+        schedule.push({
+          ...session,
+          ...slots[slotIndex],
+          scheduled:true,
+          done:Boolean(oldDone.get(session.key))
+        });
       }
     });
+
     cursor+=range;
   });
 
-  sessions.slice(schedule.length).forEach(session=>schedule.push({
-    ...session,date:settings.examDate,start:"",end:"",scheduled:false,
-    done:Boolean(oldDone.get(session.key))
-  }));
+  const schedule=[];
 
-  for(let index=0;index<activeCount;index++)if(!used.has(index)){
-    const slot=slots[index];
-    schedule.push({
-      phase:"Catch-up",kind:"Catch-up",subject:"",topic:"",
-      title:"Catch-up or restudy a difficult topic",key:`catchup|${slot.date}|${slot.start}`,
-      ...slot,scheduled:true,done:Boolean(oldDone.get(`catchup|${slot.date}|${slot.start}`))
+  groups.forEach((group,index)=>{
+    const weight=group.phase==="Initial coverage"
+      ?4
+      :group.phase==="Mocks"
+        ?2
+        :3;
+
+    const share=index===groups.length-1
+      ?extra
+      :Math.floor(extra*weight/weights);
+
+    const range=group.items.length+share;
+
+    group.items.forEach((session,itemIndex)=>{
+      const slotIndex=cursor+Math.floor(itemIndex*range/group.items.length);
+
+      if(slotIndex<slots.length){
+        used.add(slotIndex);
+        schedule.push({
+          ...session,
+          ...slots[slotIndex],
+          scheduled:true,
+          done:Boolean(oldDone.get(session.key))
+        });
+      }
     });
+
+    cursor+=range;
+  });
+
+  sessions.slice(schedule.length).forEach(session=>{
+    schedule.push({
+      ...session,
+      date:settings.examDate,
+      start:"",
+      end:"",
+      scheduled:false,
+      done:Boolean(oldDone.get(session.key))
+    });
+  });
+
+  for(let index=0;index<activeCount;index++){
+    if(used.has(index))continue;
+
+    const slot=slots[index];
+
+    if(singleTopicPlan){
+      const subject=subjects[0].name;
+      const topic=subjects[0].topics[0].name;
+      const practiceKey=`practice|${subject}|${topic}|${slot.date}|${slot.start}`;
+
+      schedule.push({
+        phase:"Daily practice",
+        kind:"Topic practice",
+        subject,
+        topic,
+        title:`Study and practice: ${topic}`,
+        key:practiceKey,
+        ...slot,
+        scheduled:true,
+        done:Boolean(
+          oldDone.get(practiceKey)||
+          oldDone.get(`catchup|${slot.date}|${slot.start}`)
+        )
+      });
+    }else{
+      const catchupKey=`catchup|${slot.date}|${slot.start}`;
+
+      schedule.push({
+        phase:"Catch-up",
+        kind:"Catch-up",
+        subject:"",
+        topic:"",
+        title:"Catch-up or restudy a difficult topic",
+        key:catchupKey,
+        ...slot,
+        scheduled:true,
+        done:Boolean(oldDone.get(catchupKey))
+      });
+    }
   }
-  return{schedule,warnings,capacity:slots.length,required:sessions.length,
-    studyDays:new Set(slots.map(slot=>slot.date)).size};
+
+  schedule.sort((a,b)=>{
+    return `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`);
+  });
+
+  return{
+    schedule,
+    warnings,
+    capacity:slots.length,
+    required:sessions.length,
+    studyDays:new Set(slots.map(slot=>slot.date)).size
+  };
 }
+
 
 async function generatePlan(){
   const problem=validateStep(1)||validateStep(2)||validateStep(3);
